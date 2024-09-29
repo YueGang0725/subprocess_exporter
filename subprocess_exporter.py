@@ -42,26 +42,24 @@ memory = Gauge('memory', '内存(MB)', ['pid', 'name'])
 memory_usage_rate = Gauge('memory_usage_rate', '内存占用率', ['pid', 'name'])
 
 # 赋值
-subprocess_exporter_info.info({'version': '1.1.1', 'author': '岳罡', 'blog': 'https://www.cnblogs.com/test-gang'})
-def process_request(pid_lists):
-    for i in pid_lists:
-        a = print_process(i)
-        subprocess_info.labels(pid=f'{i}', name=f'{a[1]}')
-        cpu_utilization.labels(pid=f'{i}', name=f'{a[1]}').set(a[2])
-        memory.labels(pid=f'{i}', name=f'{a[1]}').set(a[3]/1048576)
-        memory_usage_rate.labels(pid=f'{i}', name=f'{a[1]}').set(a[4])
+subprocess_exporter_info.info({'version': '1.1.2', 'author': '岳罡', 'blog': 'https://www.cnblogs.com/test-gang'})
+def process_request(pid):
+    a = print_process(pid)
+    subprocess_info.labels(pid=f'{pid}', name=f'{a[1]}')
+    cpu_utilization.labels(pid=f'{pid}', name=f'{a[1]}').set(a[2])
+    memory.labels(pid=f'{pid}', name=f'{a[1]}').set(a[3]/1048576)
+    memory_usage_rate.labels(pid=f'{pid}', name=f'{a[1]}').set(a[4])
 
 
 if __name__ == '__main__':
     # 启动 HTTP 服务器，默认监听在 8000 端口
     start_http_server(data['config']['start_http_server'])
 
-
-    # 创建 ThreadPoolExecutor
-    with ThreadPoolExecutor(max_workers=4) as executor:  # 控制线程池大小为4
-        # 循环处理请求
-        while True:
+    # 循环处理请求
+    while True:
+        # 创建 ThreadPoolExecutor
+        with ThreadPoolExecutor(max_workers=4) as executor:  # 控制线程池大小为4
             # 提交任务给线程池
-            future = executor.submit(process_request, pid_list)
+            future = [executor.submit(process_request, pid) for pid in pid_list]
             time.sleep(4)
 
